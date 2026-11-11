@@ -28,6 +28,20 @@ Chalkline uses plugin capabilities to keep these boundaries in code:
 
 Live tests with three WhatsApp accounts verified customer text, photo and native voice capture, one acknowledgement, owner-only quote approval, customer PDF receipt, replay prevention and one appointment reminder. The reminder used two accelerated executions of the real scheduler job. See [the validation record](docs/LIVE-VALIDATION.md).
 
+## Let Hermes set it up
+
+You don't need to type any of the commands below yourself. Send this repository link to your Hermes agent and say:
+
+> Install and set up Chalkline from https://github.com/levi-lvjp/chalkline for my business. Follow its README.
+
+Hermes can run the installation and fill in your settings. It will ask for your business name, your personal phone number, your currency, your timezone and your hourly rate. Three steps stay with you:
+
+1. Use your business phone to scan the WhatsApp QR code when Hermes shows it.
+2. Read the two message templates, then approve each one with the code Hermes gives you.
+3. Restart Hermes when it asks.
+
+After that, everything happens in WhatsApp. The manual steps below are the same steps Hermes follows.
+
 ## Quickstart
 
 Tested locally on Hermes **v0.22.2**, Windows. Chalkline uses the provider and model already configured in Hermes; it does not select a model or require a separate model login. Owner drafting uses Hermes tool calling. Receipt extraction needs a vision-capable configured provider; owner voice commands depend on Hermes speech transcription.
