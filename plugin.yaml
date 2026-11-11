@@ -1,0 +1,25 @@
+name: chalkline
+version: 0.1.0
+description: Back office for solo tradespeople. Capture jobs, prepare quotes and invoices, and review customer sends.
+requires_hermes: ">=0.22.2"
+provides_tools:
+  - office_capture
+  - office_customer
+  - office_quote_draft
+  - office_extra_propose
+  - office_extra_record_agreement
+  - office_schedule
+  - office_complete
+  - office_invoice_draft
+  - office_receipt
+  - office_payment_record
+  - office_query
+  - office_export
+  - office_tick
+provides_hooks:
+  - pre_gateway_dispatch
+  - post_gateway_admission
+  - pre_llm_call
+  - on_session_end
+python_dependencies:
+  - 'fpdf2>=2.8.4,<3'

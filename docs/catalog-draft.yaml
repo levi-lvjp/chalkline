@@ -1,0 +1,99 @@
+# DRAFT ONLY. Set final repository, commit and media URLs before submission.
+# Replace all placeholders and revalidate capabilities at the pinned SHA.
+name: chalkline
+title: Chalkline — Voice note in. Paperwork out.
+repo: https://github.com/levi-lvjp/chalkline
+sha: "<40-character-final-commit-sha>"
+maintainer: levi-lvjp
+tier: community
+category: automation
+version: "0.1.0"
+requires_hermes: ">=0.22.2"
+docs_url: https://github.com/levi-lvjp/chalkline/blob/<sha>/README.md
+image: https://raw.githubusercontent.com/levi-lvjp/chalkline/<sha>/docs/assets/banner.png
+screenshots:
+  - https://raw.githubusercontent.com/levi-lvjp/chalkline/<sha>/docs/assets/approval.png
+  - https://raw.githubusercontent.com/levi-lvjp/chalkline/<sha>/docs/assets/pipeline.png
+  - https://raw.githubusercontent.com/levi-lvjp/chalkline/<sha>/docs/assets/job.png
+  - https://raw.githubusercontent.com/levi-lvjp/chalkline/<sha>/docs/assets/quote.png
+  - https://raw.githubusercontent.com/levi-lvjp/chalkline/<sha>/docs/assets/export.png
+readme: true
+description: >-
+  A Hermes back office for solo tradespeople: capture enquiries, prepare quote
+  and invoice PDFs, retain receipts and agreed extras, review follow-ups and
+  export an accountant ZIP. Customer sends require payload-bound owner approval,
+  except three template kinds approved once by hash. Disclosure — WhatsApp uses
+  Hermes' unofficial Baileys bridge and can expose the linked number to restriction
+  or ban; use a dedicated business number. Three-account live tests verified
+  text/photo/voice intake, owner-only quote approval, customer PDF receipt and
+  one reminder from two accelerated real scheduler runs. Records, evidence copies,
+  PDFs and exports persist in the active profile's SQLite database and plugin data
+  folder. Intake makes no model call, but customer text/transcript evidence can
+  reach the configured model when the owner queries a job. Owner messages/media
+  follow Hermes provider configuration, and receipt extraction explicitly sends
+  the selected cached image to the configured vision provider. Customer voice
+  is stored without automatic transcription. The plugin adds no telemetry endpoint.
+  Approved sends spawn the public hermes send CLI. A 15-minute no-agent Python
+  script runs scheduled work; Telegram uses Hermes handler integration.
+  Local Desktop API and 390px page rendering
+  were verified. Cloud/Webapp and native Desktop activation remain unverified.
+  Adds /office owner commands, a Desktop page, authenticated dashboard API,
+  Telegram approval buttons, and one recurring no-agent cron job. Installation
+  takes over non-owner WhatsApp intake. Setup requires explicit restrict_toolsets=true
+  consent on a named dedicated business profile, backs up config.yaml.bak, then
+  restricts WhatsApp, Telegram, CLI and cron toolsets. Run the dedicated profile in its own
+  Hermes home, or standalone. No payment processing, email or jurisdiction-specific tax rules.
+known_issues:
+  - "Cloud deployment and native Desktop activation remain unverified."
+  - "Customer voice notes are stored without automatic transcription."
+capabilities:
+  provides_tools:
+    - office_capture
+    - office_customer
+    - office_quote_draft
+    - office_extra_propose
+    - office_extra_record_agreement
+    - office_schedule
+    - office_complete
+    - office_invoice_draft
+    - office_receipt
+    - office_payment_record
+    - office_query
+    - office_export
+    - office_tick
+  provides_hooks:
+    - pre_gateway_dispatch
+    - post_gateway_admission
+    - pre_llm_call
+    - on_session_end
+  provides_middleware: []
+  requires_env: []
+
+# Disclosure answers; paths below are relative to plugin/ (refresh at final SHA).
+# 1. Customer model exposure: channels/frontdesk.py:69 capture has no LLM call.
+#    core/tools.py:114 returns queries.job_detail, including customer source text.
+#    core/queries.py:45-67 returns evidence text/file references, not image/audio
+#    bytes. core/receipts.py:25-38 explicitly uploads selected cached image bytes.
+#    core/tools.py:42-50 restricts receipt input to current-profile media caches.
+# 2. Ack: channels/frontdesk.py:57-60 requires a resolved phone and approved
+#    standing template. core/service.py:850-893 atomically enforces the 12h window.
+#    It is not unconditional: groups/echoes skip, absent templates stay silent,
+#    unresolved LIDs are captured for owner review without an automatic reply.
+# 3. Tick: channels/tick.py:108-110 creates */15 * * * * with no_agent=True.
+#    The generated profile script imports run_tick; it makes no model call.
+#    Real Hermes scheduler subprocess tests verified this against profile SQLite.
+# 4. Dependency: plugin.yaml:24-25 declares only fpdf2>=2.8.4,<3.
+#    Pillow is transitive; FastAPI and the messaging bridge come from Hermes.
+# 5. requires_hermes >=0.22.2 matches the locally tested release. It does not
+#    imply verification on every host or Cloud operation.
+
+# 
+# surfaces:
+#   # Additional declared surfaces and owner-visible effects.
+#   commands: ["/office setup", "/office pending", "/office approve", "/office reject", "/office jobs", "/office job", "/office export", "/office digest"]
+#   dashboard: "Authenticated /api/plugins/chalkline/ read views and POST approval, payment and export actions"
+#   desktop: "Chalkline page registered through the Hermes Desktop SDK"
+#   telegram: "Owner-private pending approvals and verified callback buttons"
+#   scheduler: "Creates one 15-minute no-agent Python job in the active profile"
+#   configuration: "Explicit restrict_toolsets=true consent on a named business profile backs up config.yaml.bak and restricts CLI, cron, WhatsApp and Telegram to Chalkline tools"
+#   intake: "Installing/enabling takes over non-owner WhatsApp DMs; use a dedicated business profile and run it in its own Hermes home or as a standalone gateway"

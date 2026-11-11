@@ -1,0 +1,1 @@
+"""Profile-local office ledger."""
