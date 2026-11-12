@@ -6,6 +6,7 @@ import os
 import re
 import shutil
 import subprocess
+import sys
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
@@ -20,6 +21,18 @@ logger = logging.getLogger(__name__)
 SEND_TIMEOUT = 45
 MEDIA_SYNTAX = re.compile(r"MEDIA:|\[\[(?:audio_as_voice|as_document)\]\]", re.IGNORECASE)
 _deliveries = set()
+
+
+def _child_env(root):
+    """Minimal environment for the send CLI, so gateway secrets and other profiles' settings don't leak in."""
+    keys = ["PATH", "HOME"]
+    if os.name == "nt":
+        keys += ["USERPROFILE", "SYSTEMROOT", "LANG"]
+    env = {key: os.environ[key] for key in keys if key in os.environ}
+    if os.name == "nt":
+        env.update({key: value for key, value in os.environ.items() if key.startswith("LC_")})
+    env.update({"HERMES_HOME": str(root), "PYTHONIOENCODING": "utf-8"})
+    return env
 
 
 def _send_whatsapp(recipient, body, attachment_path=None):
@@ -41,12 +54,11 @@ def _send_whatsapp(recipient, body, attachment_path=None):
         profile = home.name
     else:
         return "failed", "Unable to resolve the active Hermes profile."
-    env = {**os.environ, "HERMES_HOME": str(root), "PYTHONIOENCODING": "utf-8"}
     try:
         result = subprocess.run(
-            ["hermes", "-p", profile, "send", "--to", f"whatsapp:{recipient}", "--json", "--file", "-"],
+            [sys.executable, "-m", "hermes_cli.main", "-p", profile, "send", "--to", f"whatsapp:{recipient}", "--json", "--file", "-"],
             input=body, capture_output=True, encoding="utf-8", errors="replace",
-            env=env, timeout=SEND_TIMEOUT, creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
+            env=_child_env(root), timeout=SEND_TIMEOUT, creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
         )
     except subprocess.TimeoutExpired:
         return "unknown", "Hermes send timed out."

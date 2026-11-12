@@ -326,3 +326,20 @@ async def test_telegram_pending_displays_stored_payment_details(profile):
     preview = "".join(call.args[0] for call in reply.call_args_list)
     assert '"amount_minor": 5500' in preview
     assert "Fictional transfer" in preview
+
+
+def test_customer_media_is_capped_per_sender_per_day(profile, monkeypatch):
+    home, _send = profile
+    monkeypatch.setattr(frontdesk, "DAILY_MEDIA_CAP", 2)
+    photos = []
+    for index in range(3):
+        photo = home / f"tap-{index}.png"
+        photo.write_bytes(f"fictional photo {index}".encode())
+        photos.append(str(photo))
+    frontdesk._capture_customer(CUSTOMER, event(message_id="cap-1", media_urls=photos[:2],
+                                                 media_types=["image/png"] * 2))
+    frontdesk._capture_customer(CUSTOMER, event(text="One more", message_id="cap-2", media_urls=photos[2:],
+                                                 media_types=["image/png"]))
+    sources = queries.job_detail(queries.jobs()[0]["number"])["sources"]
+    assert sum(row["kind"] == "photo" for row in sources) == 2
+    assert any("daily media limit" in row["text"] for row in sources if row["kind"] == "text")

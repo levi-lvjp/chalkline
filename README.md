@@ -102,7 +102,7 @@ The owner can also use literal `APPROVE A17` / `REJECT A17` in an idle WhatsApp 
 
 The model proposes. Code validates state transitions, recomputes totals and commits the ledger. Money commitments and ordinary customer messages use single-use, payload-bound approvals that expire after 24 hours. Editing a payload invalidates its earlier approval.
 
-Three template kinds can receive standing approval: enquiry acknowledgement, appointment reminder and review request. Editing a template needs fresh approval. Acknowledgements are capped at one per customer per 12-hour window; an unresolved phone receives no automatic customer reply.
+Three template kinds can receive standing approval: enquiry acknowledgement, appointment reminder and review request. Editing a template needs fresh approval. Acknowledgements are capped at one per customer per 12-hour window, and stored customer attachments at 30 per sender per 24 hours; an unresolved phone receives no automatic customer reply.
 
 Customers are captured before a normal owner agent turn. They cannot approve codes. Owner tools verify transport identity, and the business profile restricts its toolsets. Customer evidence is untrusted input, including when the owner agent reads it.
 

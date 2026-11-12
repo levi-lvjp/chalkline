@@ -1,6 +1,7 @@
 import argparse
 import json
 import subprocess
+import sys
 from contextlib import asynccontextmanager, redirect_stdout
 from io import StringIO
 from pathlib import Path
@@ -51,7 +52,7 @@ def test_timeout_is_unknown_and_row_is_never_reclaimed(monkeypatch, profile):
     assert queries.get_outbox(row["id"])["status"] == "unknown"
     assert outbound.deliver_outbox(row["id"]) is None
     assert cli.call_count == 2
-    assert cli.call_args_list[1].args[0][5] == "whatsapp:+12025550101"
+    assert cli.call_args_list[1].args[0][7] == "whatsapp:+12025550101"
 
 
 def test_approved_text_and_pdf_use_real_cli_handler_and_mock_bridge(profile, monkeypatch):
@@ -84,17 +85,20 @@ def test_approved_text_and_pdf_use_real_cli_handler_and_mock_bridge(profile, mon
         yield SimpleNamespace(get=respond, post=respond)
 
     def run_cli(argv, *, input, timeout, **_kwargs):
-        assert argv[:5] == ["hermes", "-p", "chalkline-dev", "send", "--to"]
-        assert argv[5] in {f"whatsapp:{NUMBER}", "whatsapp:+12025550101"}
-        assert argv[6:] == ["--json", "--file", "-"]
+        assert argv[:7] == [sys.executable, "-m", "hermes_cli.main", "-p", "chalkline-dev", "send", "--to"]
+        assert argv[7] in {f"whatsapp:{NUMBER}", "whatsapp:+12025550101"}
+        assert argv[8:] == ["--json", "--file", "-"]
+        assert set(_kwargs["env"]) <= {"PATH", "HOME", "USERPROFILE", "SYSTEMROOT", "LANG", "HERMES_HOME", "PYTHONIOENCODING"} | {k for k in _kwargs["env"] if k.startswith("LC_")}
+        assert "FIXTURE_GATEWAY_SECRET" not in _kwargs["env"]
         assert timeout == outbound.SEND_TIMEOUT
         stdout = StringIO()
         with monkeypatch.context() as context, redirect_stdout(stdout), pytest.raises(SystemExit) as exit_info:
             context.setattr("sys.stdin", StringIO(input))
-            cmd_send(argparse.Namespace(to=argv[5], message=None, file="-", json=True))
+            cmd_send(argparse.Namespace(to=argv[7], message=None, file="-", json=True))
         return subprocess.CompletedProcess(argv, exit_info.value.code, stdout.getvalue())
 
     monkeypatch.setattr("aiohttp.ClientSession", session)
+    monkeypatch.setenv("FIXTURE_GATEWAY_SECRET", "must-not-reach-child")
     monkeypatch.setattr(outbound.subprocess, "run", run_cli)
     text_row = service.enqueue_message("other", NUMBER, "Fictional reminder", "test:text")
     pdf_row = service.enqueue_message("other", NUMBER, "Fictional invoice", "test:pdf", attachment_path=document)
@@ -133,7 +137,7 @@ def test_pdf_changed_after_claim_is_not_sent(profile, monkeypatch):
     monkeypatch.setattr(outbound.subprocess, "run", send)
     assert outbound.deliver_outbox(row["id"]) == "failed"
     send.assert_called_once()
-    assert send.call_args.args[0][5] == "whatsapp:+12025550101"
+    assert send.call_args.args[0][7] == "whatsapp:+12025550101"
 
 
 def test_text_cannot_add_unapproved_attachment(monkeypatch):

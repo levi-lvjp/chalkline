@@ -18,6 +18,9 @@ def schedule_delivery(outbox_id):
     send(outbox_id)
 
 
+DAILY_MEDIA_CAP = 30
+
+
 def _media(event):
     paths = event.media_urls or []
     types = event.media_types or []
@@ -27,6 +30,18 @@ def _media(event):
         kind = "photo" if mime.startswith("image/") else "voice" if mime.startswith("audio/") else "document"
         items.append({"kind": kind, "path": Path(path)})
     return items
+
+
+def _within_media_cap(sender, media):
+    """Keep at most DAILY_MEDIA_CAP stored attachments per customer per rolling 24 hours."""
+    if not media:
+        return media
+    from datetime import timedelta
+
+    from ..core import queries
+
+    used = queries.media_count_since(sender, queries.clock_now() - timedelta(hours=24))
+    return media[:max(0, DAILY_MEDIA_CAP - used)]
 
 
 def _queue_replies(phone, capture, event, media):
@@ -75,7 +90,9 @@ def _capture_customer(phone, event, *, capture_only=False):
     capture_enquiry = service.capture_enquiry if phone else service.capture_unresolved_enquiry
     args = {"text": event.text or "", "message_id": event.message_id, "name": _display_name(event)}
     try:
-        media = _media(event)
+        media = _within_media_cap(sender, _media(event))
+        if len(media) < len(event.media_urls or []):
+            args["text"] = (args["text"] + "\n[Attachment not stored: daily media limit reached.]").strip()
         capture = capture_enquiry(sender, media=media, **args)
     except Exception:
         logger.exception("WhatsApp capture failed with media. Trying text-only capture.")

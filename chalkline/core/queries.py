@@ -125,6 +125,15 @@ def _pending_approvals(db, now: datetime | None) -> list[dict]:
         })
     return result
 
+def media_count_since(sender: str, since: datetime) -> int:
+    """Count stored customer attachments from one sender since a time."""
+    with connect() as db:
+        return db.execute(
+            "SELECT COUNT(*) FROM sources WHERE sender = ? AND file_path IS NOT NULL AND created_at >= ?",
+            (sender, timestamp(since)),
+        ).fetchone()[0]
+
+
 def clock_now() -> datetime:
     """Return the shared real or explicitly selected demo clock."""
     return current_time()
